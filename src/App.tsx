@@ -1,89 +1,63 @@
-interface Todo {
+import { useState } from 'react'
+
+interface Order {
   id: string
-  text: string
-  isCompleted: boolean
+  tableNumber: number
+  status: 'pending' | 'ready'
+  items: string[]
 }
 
-import { useState, useEffect } from 'react'
-import './App.css'
+const INITIAL_ORDERS: Order[] = [
+  { id: '1', tableNumber: 5, status: 'pending', items: ['Пицца', 'Кола'] },
+  { id: '2', tableNumber: 2, status: 'ready', items: ['Суп', 'Кофе'] },
+  { id: '3', tableNumber: 8, status: 'pending', items: ['Бургер', 'Картошка', 'Кола'] },
+]
 
-const INITIAL_TODOS = [] as Todo[]
-
-export default function App(){
-
+export default function App() {
+  const [orders, setOrders] = useState<Order[]>(INITIAL_ORDERS)
   const [input, setInput] = useState('')
-  const [filter, setFilter] = useState('all') 
-  const [todos, setTodos] = useState<Todo[]>(() => { 
-    const saved = localStorage.getItem('todos');
-    if (!saved){
-      return INITIAL_TODOS
-    }
-    return JSON.parse(saved) as Todo[]
-})
-
-  const addTodo = () => {
-    if (input.trim()){
-      setTodos([...todos, 
-        {
-          text: input,
-          id: crypto.randomUUID(),
-          isCompleted: false
-        }
-      ])
-      setInput('')
-    }
+  const filteredOrders = orders.filter(order => 
+    order.items.join(', ').toLowerCase().includes(input.toLowerCase())
+  )
+  
+  const makeReady = (id: string) => {
+    setOrders(
+      orders.map(order => 
+          (id === order.id) 
+            ? {...order, status: 'ready'}
+            : order
+      ))
   }
 
-  const removeTodo = (id: string) => {
-    setTodos(
-      todos.filter(todo => 
-        todo.id !== id  
+  const cancelOrder = (id: string) => {
+    setOrders(
+      orders.filter(order => 
+        order.id !== id 
       )
     )
   }
 
-  const todoCompletion = (id: string) => {
-    setTodos(
-      todos.map(todo => (
-        todo.id === id 
-          ? {...todo, isCompleted: !todo.isCompleted}
-          : todo
-      ))
-    )
-  }
-
-  const todosToShow = todos.filter(todo => {
-    if (filter === 'completed'){
-      return todo.isCompleted === true
-    } else
-    if (filter === 'active'){
-      return todo.isCompleted === false  
-    } else
-      return todo
-  })
-
-  useEffect(() => {
-    localStorage.setItem('todos', JSON.stringify(todos))
-  }, [todos])
-
-  return (
+return (
     <div>
-      <input type="text" value={input} onChange={(e) => setInput(e.target.value)} />
-      <button onClick={() => addTodo()}>Добавить</button>
+      <p>Заказы: </p>
+      <input 
+        type="text" 
+        placeholder='Поиск по продуктам...' 
+        value={input} 
+        onChange={(e) => setInput(e.target.value)} 
+      />
       <ul>
-        {todosToShow.map(todo => (
-          <li key={todo.id}>
-            <input type="checkbox" checked={todo.isCompleted} onChange={() => todoCompletion(todo.id)} />
-            {todo.text}
-            <button onClick={() => removeTodo(todo.id)}>✖</button>
+        {filteredOrders.map(order => (
+          <li key={order.id}>
+            <p>Ваш заказ в статусе: {order.status}</p>
+            {order.items.join(', ')}
+            <button onClick={() => makeReady(order.id)}>Готово!</button>
+            <button onClick={() => cancelOrder(order.id)}>Отмена</button>
           </li>
         ))}
       </ul>
-      
-      <button onClick={() => setFilter('all')}>Все</button>
-      <button onClick={() => setFilter('active')}>Активные</button>
-      <button onClick={() => setFilter('completed')}>Завершенные</button>
-      <p>Осталось выполнить: {todos.filter(todo => todo.isCompleted === false).length}</p>
+      <p>Заказы готовятся: {orders.filter(order => order.status === 'pending').length}</p>
+      <p>Готовые заказы: {orders.filter(order => order.status === 'ready').length}</p>
     </div>
   )
 }
