@@ -1,41 +1,15 @@
-import { useState } from 'react'
-
-interface Order {
-  id: string
-  tableNumber: number
-  status: 'pending' | 'ready'
-  items: string[]
-}
-
-const INITIAL_ORDERS: Order[] = [
-  { id: '1', tableNumber: 5, status: 'pending', items: ['Пицца', 'Кола'] },
-  { id: '2', tableNumber: 2, status: 'ready', items: ['Суп', 'Кофе'] },
-  { id: '3', tableNumber: 8, status: 'pending', items: ['Бургер', 'Картошка', 'Кола'] },
-]
+import { useOrders } from './useOrders'
 
 export default function App() {
-  const [orders, setOrders] = useState<Order[]>(INITIAL_ORDERS)
-  const [input, setInput] = useState('')
-  const filteredOrders = orders.filter(order => 
-    order.items.join(', ').toLowerCase().includes(input.toLowerCase())
-  )
-  
-  const makeReady = (id: string) => {
-    setOrders(
-      orders.map(order => 
-          (id === order.id) 
-            ? {...order, status: 'ready'}
-            : order
-      ))
-  }
-
-  const cancelOrder = (id: string) => {
-    setOrders(
-      orders.filter(order => 
-        order.id !== id 
-      )
-    )
-  }
+  const {
+    input,
+		setInput,
+		makeReady,
+		cancelOrder,
+		pendingOrdersCount,
+		readyOrdersCount,
+		filteredOrders
+  } = useOrders()
 
 return (
     <div>
@@ -56,8 +30,8 @@ return (
           </li>
         ))}
       </ul>
-      <p>Заказы готовятся: {orders.filter(order => order.status === 'pending').length}</p>
-      <p>Готовые заказы: {orders.filter(order => order.status === 'ready').length}</p>
+      <p>Заказы готовятся: {pendingOrdersCount}</p>
+      <p>Готовые заказы: {readyOrdersCount}</p>
     </div>
   )
 }
