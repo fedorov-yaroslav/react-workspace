@@ -1,37 +1,47 @@
-import { useOrders } from './useOrders'
+import { useState } from 'react';
+import './App.css';
+import { TaskItem } from './components/TaskItem';
 
-export default function App() {
-  const {
-    input,
-		setInput,
-		makeReady,
-		cancelOrder,
-		pendingOrdersCount,
-		readyOrdersCount,
-		filteredOrders
-  } = useOrders()
+export interface Task {
+  text: string;
+  id: string;
+  isDone: boolean;
+}
 
-return (
+export const App = () => {
+  const [inputText, setInputText] = useState('');
+
+  const [tasks, setTasks] = useState<Task[]>([]);
+
+  const addTask = () => {
+    if (inputText.trim()) {
+      setTasks((prev) => [
+        ...prev,
+        { text: inputText, id: crypto.randomUUID(), isDone: false },
+      ]);
+      setInputText('');
+    }
+  };
+
+  const toggleDone = (id: string) => {
+    setTasks(
+      tasks.map((task) => (task.id === id ? { ...task, isDone: !task.isDone } : task)),
+    );
+  };
+
+  return (
     <div>
-      <p>Заказы: </p>
-      <input 
-        type="text" 
-        placeholder='Поиск по продуктам...' 
-        value={input} 
-        onChange={(e) => setInput(e.target.value)} 
+      <input
+        type="text"
+        value={inputText}
+        onChange={(e) => setInputText(e.target.value)}
       />
+      <button onClick={addTask}>Добавить задачу</button>
       <ul>
-        {filteredOrders.map(order => (
-          <li key={order.id}>
-            <p>Ваш заказ в статусе: {order.status}</p>
-            {order.items.join(', ')}
-            <button onClick={() => makeReady(order.id)}>Готово!</button>
-            <button onClick={() => cancelOrder(order.id)}>Отмена</button>
-          </li>
+        {tasks.map((task) => (
+          <TaskItem task={task} toggleDone={toggleDone} />
         ))}
       </ul>
-      <p>Заказы готовятся: {pendingOrdersCount}</p>
-      <p>Готовые заказы: {readyOrdersCount}</p>
     </div>
-  )
-}
+  );
+};
